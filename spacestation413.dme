@@ -2921,6 +2921,7 @@
 #include "spacestation413\code\modules\clothing\glasses\hud.dm"
 #include "spacestation413\code\modules\clothing\shoes\buttshoes.dm"
 #include "spacestation413\code\modules\clothing\shoes\cluwne.dm"
+#include "spacestation413\code\modules\clothing\suits\miscellaneous.dm"
 #include "spacestation413\code\modules\discord\discordbroadcast.dm"
 #include "spacestation413\code\modules\events\floorcluwne.dm"
 #include "spacestation413\code\modules\events\immovable_rod.dm"
