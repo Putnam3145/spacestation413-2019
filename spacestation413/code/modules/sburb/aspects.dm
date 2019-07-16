@@ -44,7 +44,7 @@
 
 /datum/aspect/mind
 	name = "mind"
-	desc = "Its distinction from heart is dubious, given current science."
+	desc = "Its distinction from heart is dubious, given cloning and MMIs, but hey."
 
 /datum/aspect/rage
 	name = "rage"
