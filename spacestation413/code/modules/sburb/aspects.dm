@@ -1,22 +1,157 @@
 /datum/aspect
 	var/name = "null" // used for icon states for various things too
 	var/desc = "Ceci n'est pas une aspect."
+	var/list/spells
+	var/list/traits
+
+/datum/aspect/proc/applyToMob(var/mob/living/M)
+	for(var/T in traits)
+		M.add_trait(T,"god_tier")
+	if(M.mind)
+		for(var/S in spells)
+			var/obj/effect/proc_holder/spell/spell = new S(null)
+			spell.charge_counter = 0
+			M.mind.AddSpell(spell)
+	else
+		for(var/S in spells)
+			var/obj/effect/proc_holder/spell/spell = new S(null)
+			spell.charge_counter = 0
+			M.AddSpell(spell)
+
+/datum/aspect/proc/removeFromMob(var/mob/living/M)
+	for(var/T in traits)
+		M.remove_trait(T,"god_tier")
+	if(M.mind)
+		for(var/S in spells)
+			var/obj/effect/proc_holder/spell/spell = S
+			M.mind.RemoveSpell(spell)
+	else
+		for(var/S in spells)
+			var/obj/effect/proc_holder/spell/spell = S
+			M.RemoveSpell(spell)
 
 /datum/aspect/breath
 	name = "breath"
 	desc = "Nothing to do with freedom."
+	spells = list(
+		/obj/effect/proc_holder/spell/aoe_turf/repulse/breath
+	)
+	traits = list(
+		TRAIT_RESISTHIGHPRESSURE,
+		TRAIT_RESISTHEAT
+	)
+
+/obj/effect/proc_holder/spell/aoe_turf/repulse/breath
+	name = "Blow away"
+	desc = "Throw back attackers using your breath powers."
+	charge_max = 100
+	clothes_req = FALSE
+	antimagic_allowed = TRUE
+	range = 7
+	invocation_type = "none"
+	sound = 'sound/effects/space_wind.ogg'
+	anti_magic_check = FALSE
 
 /datum/aspect/light
 	name = "light"
 	desc = "Luck, fortune, knowledge, what isn't it?"
+	traits = list(
+		TRAIT_SURGEON, // no technology req for surgery
+		TRAIT_NOSLIPALL, // think contessa i guess
+		TRAIT_XRAY_VISION // duh
+	)
 
 /datum/aspect/time
 	name = "time"
 	desc = "DO NOT MESS WITH TIME."
+	spells = list(
+		/obj/effect/proc_holder/spell/aoe_turf/conjure/timestop/time_aspect,
+		/obj/effect/proc_holder/spell/self/dejavu
+	)
+
+/obj/effect/proc_holder/spell/aoe_turf/conjure/timestop/time_aspect
+	invocation_type = "none"
+	clothes_req = FALSE
+	charge_max = 200
+
+/obj/effect/proc_holder/spell/self/dejavu
+	name = "Revert" //magic the gathering joke here
+	desc = "Saves the current moment, then brings you back to it in 10 seconds."
+	clothes_req = FALSE
+	charge_max = 200
+	invocation_type = "none"
+	action_icon = 'spacestation413/icons/mob/actions.dmi'
+	action_icon_state = "time"
+
+/obj/effect/proc_holder/spell/self/dejavu/can_cast(mob/user = usr)
+	. = ..()
+	if(!isturf(user.loc))
+		return FALSE
+
+/obj/effect/proc_holder/spell/self/dejavu/cast(mob/user = usr)
+	. = ..()
+	target.AddComponent(/datum/component/dejavu,1)
 
 /datum/aspect/space
 	name = "space"
 	desc = "You know. The... not-thing... around you."
+	spells = list(
+		/obj/effect/proc_holder/spell/targeted/area_teleport/space_aspect
+	)
+
+/obj/effect/proc_holder/spell/targeted/area_teleport/space_aspect
+	say_destination = FALSE
+	invocation_area = FALSE
+	name = "Teleport"
+	desc = "Use your space powers to go to a place of your choice."
+	var/obj/effect/temp_visual/dir_setting/ninja/phase/out/spot1
+	var/obj/effect/temp_visual/dir_setting/ninja/phase/spot2
+
+/obj/effect/proc_holder/spell/targeted/area_teleport/space_aspect/invocation(area/chosenarea = null,mob/living/user = usr)
+	..()
+	spot1 = new(get_turf(user), user.dir)
+
+/obj/effect/proc_holder/spell/targeted/area_teleport/space_aspect/cast(list/targets,area/thearea,mob/user = usr)
+	..()
+	spot2 = new(get_turf(user), user.dir)
+
+/obj/effect/proc_holder/spell/targeted/touch/green_sun_blink
+	name = "Target Blink"
+	desc = "Teleports to a nearby location."
+	hand_path = /obj/item/melee/touch_attack/rathens
+
+	school = "evocation"
+	charge_max = 400
+	clothes_req = TRUE
+	cooldown_min = 40 //90 deciseconds reduction per rank
+
+	action_icon_state = "gib"
+
+/obj/item/green_sun_blink
+	var/datum/action/innate/dash/space/jaunt
+
+/datum/action/innate/dash/space
+	current_charges = 2
+	max_charges = 2
+	charge_rate = 500
+	recharge_sound = null
+
+/obj/item/green_sun_blink/Initialize()
+	. = ..()
+	jaunt = new(src)
+
+/obj/item/green_sun_blink/afterattack(atom/target, mob/user, proximity_flag, click_parameters)
+	. = ..()
+	jaunt.Teleport(user, target)
+	if(jaunt.charges == 0)
+		QDEL_NULL(src)
+
+/obj/effect/proc_holder/spell/targeted/touch/superblink
+	hand_path = obj/item/green_sun_blink
+	name = "Targeted blink"
+	desc = "Lets you teleport to a location of your choosing in your line of sight twice."
+	charge_max = 100
+	action_state_icon = "space"
 
 /datum/aspect/life
 	name = "life"

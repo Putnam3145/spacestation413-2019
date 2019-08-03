@@ -8,7 +8,8 @@
 
 /datum/status_effect/questbed/tick()
 	if(owner.stat==DEAD)
-		
+		owner.AddComponent(/datum/component/godtier,aspect)
+		owner.revive(1)
 		qdel(src)
 
 /obj/screen/alert/status_effect/questbed
