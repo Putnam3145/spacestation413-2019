@@ -48,11 +48,12 @@
 /datum/aspect/breath
 	name = "breath"
 	desc = "Nothing to do with freedom."
+	var/prev_ventcrawler
 	spells = list(
-		/obj/effect/proc_holder/spell/aoe_turf/repulse/breath
+		/obj/effect/proc_holder/spell/targeted/ethereal_jaunt/breath
 	)
 	active_spells = list(
-		/obj/effect/proc_holder/spell/targeted/ethereal_jaunt/breath
+		/obj/effect/proc_holder/spell/aoe_turf/repulse/breath
 	)
 	traits = list(
 		TRAIT_RESISTHIGHPRESSURE,
@@ -88,10 +89,19 @@
 
 	forceMove(newLoc)
 
+/datum/breath/applyToMob(var/mob/living/M,active=0)
+	..()
+	prev_ventcrawler = M.ventcrawler
+	M.ventcrawler = VENTCRAWLER_ALWAYS
+
+/datum/breath/removeFromMob(var/mob/living/M,active=0)
+	..()
+	M.ventcrawler = prev_ventcrawler
+
 /obj/effect/proc_holder/spell/aoe_turf/repulse/breath
 	name = "Blow away"
 	desc = "Throw back attackers using your breath powers."
-	charge_max = 100
+	charge_max = 300
 	clothes_req = FALSE
 	antimagic_allowed = TRUE
 	range = 7
@@ -104,17 +114,50 @@
 	desc = "Luck, fortune, knowledge, what isn't it?"
 	traits = list(
 		TRAIT_SURGEON, // no technology req for surgery
-		TRAIT_NOSLIPALL, // think contessa i guess
 		TRAIT_XRAY_VISION // duh
 	)
+	passive_traits = list(
+		TRAIT_NOSLIPALL, // think contessa i guess
+		TRAIT_RADIMMUNE // light. radiation.
+	)
+	active_spells = list(
+		/obj/effect/proc_holder/spell/targeted/trigger/blind // yeah no flavor on this one just straight up
+		/obj/effect/proc_holder/spell/targeted/genetic/clumsify
+	)
 
+/obj/effect/proc_holder/spell/targeted/genetic/clumsify
+	name = "Steal luck"
+	desc = "Make someone very unlucky."
+	traits = list(TRAIT_CLUMSY, TRAIT_POOR_AIM)
+	duration = 300
+	charge_max = 400
+	action_icon = 'spacestation413/icons/mob/actions.dmi'
+	action_icon_state = "slip"
+	
 /datum/aspect/time
 	name = "time"
 	desc = "DO NOT MESS WITH TIME."
 	spells = list(
-		/obj/effect/proc_holder/spell/aoe_turf/conjure/timestop/time_aspect,
 		/obj/effect/proc_holder/spell/self/dejavu
 	)
+	active_spells = list(
+		/obj/effect/proc_holder/spell/aoe_turf/conjure/timestop/time_aspect
+	)
+	passive_traits = list(
+		TRAIT_NOHUNGER // for metabolism boost
+	)
+
+/datum/breath/applyToMob(var/mob/living/M,active=0)
+	..()
+	if(!active)
+		to_chat(user,"<span class='notice'>You feel your metabolism speed up immensely.</span>")
+		M.metabolism_efficiency = 3
+
+/datum/breath/removeFromMob(var/mob/living/M,active=0)
+	..()
+	if(!active)
+		to_chat(user,"<span class='notice'>You feel your metabolism slow down to normal.</span>")
+		M.metabolism_efficiency = 1
 
 /obj/effect/proc_holder/spell/aoe_turf/conjure/timestop/time_aspect
 	invocation_type = "none"
@@ -142,8 +185,14 @@
 /datum/aspect/space
 	name = "space"
 	desc = "You know. The... not-thing... around you."
-	spells = list(
+	active_spells = list(
 		/obj/effect/proc_holder/spell/targeted/area_teleport/space_aspect
+	)
+	spells = list(
+		/obj/effect/proc_holder/spell/targeted/touch/green_sun_blink
+	)
+	passive_traits = list(
+		
 	)
 
 /obj/effect/proc_holder/spell/targeted/area_teleport/space_aspect
@@ -163,16 +212,11 @@
 	spot2 = new(get_turf(user), user.dir)
 
 /obj/effect/proc_holder/spell/targeted/touch/green_sun_blink
-	name = "Target Blink"
-	desc = "Teleports to a nearby location."
-	hand_path = /obj/item/melee/touch_attack/rathens
-
-	school = "evocation"
-	charge_max = 400
-	clothes_req = TRUE
-	cooldown_min = 40 //90 deciseconds reduction per rank
-
-	action_icon_state = "gib"
+	hand_path = obj/item/green_sun_blink
+	name = "Targeted blink"
+	desc = "Lets you teleport to a location of your choosing in your line of sight twice."
+	charge_max = 100
+	action_state_icon = "space"
 
 /obj/item/green_sun_blink
 	var/datum/action/innate/dash/space/jaunt
@@ -192,14 +236,6 @@
 	jaunt.Teleport(user, target)
 	if(jaunt.charges == 0)
 		QDEL_NULL(src)
-
-/obj/effect/proc_holder/spell/targeted/touch/superblink
-	hand_path = obj/item/green_sun_blink
-	name = "Targeted blink"
-	desc = "Lets you teleport to a location of your choosing in your line of sight twice."
-	charge_max = 100
-	action_state_icon = "space"
-
 /datum/aspect/life
 	name = "life"
 	desc = "Hopefully something you have some of."
