@@ -2,31 +2,46 @@
 	var/name = "null" // used for icon states for various things too
 	var/desc = "Ceci n'est pas une aspect."
 	var/list/spells
+	var/list/active_spells
 	var/list/traits
+	var/list/passive_traits
 
-/datum/aspect/proc/applyToMob(var/mob/living/M)
+/datum/aspect/proc/applyToMob(var/mob/living/M,active=0)
 	for(var/T in traits)
 		M.add_trait(T,"god_tier")
+	if(!active)
+		for(var/T in passive_traits)
+			M.add_trait(T,"god_tier")
 	if(M.mind)
 		for(var/S in spells)
 			var/obj/effect/proc_holder/spell/spell = new S(null)
 			spell.charge_counter = 0
 			M.mind.AddSpell(spell)
+		if(active)
+			for(var/S in active_spells)
+				var/obj/effect/proc_holder/spell/spell = new S(null)
+				spell.charge_counter = 0
+				M.mind.AddSpell(spell)
 	else
 		for(var/S in spells)
 			var/obj/effect/proc_holder/spell/spell = new S(null)
 			spell.charge_counter = 0
 			M.AddSpell(spell)
+		if(active)
+			for(var/S in active_spells)
+				var/obj/effect/proc_holder/spell/spell = new S(null)
+				spell.charge_counter = 0
+				M.AddSpell(spell)
 
 /datum/aspect/proc/removeFromMob(var/mob/living/M)
-	for(var/T in traits)
+	for(var/T in traits | passive_traits)
 		M.remove_trait(T,"god_tier")
 	if(M.mind)
-		for(var/S in spells)
+		for(var/S in spells | active_spells)
 			var/obj/effect/proc_holder/spell/spell = S
 			M.mind.RemoveSpell(spell)
 	else
-		for(var/S in spells)
+		for(var/S in spells | active_spells)
 			var/obj/effect/proc_holder/spell/spell = S
 			M.RemoveSpell(spell)
 
@@ -36,10 +51,42 @@
 	spells = list(
 		/obj/effect/proc_holder/spell/aoe_turf/repulse/breath
 	)
+	active_spells = list(
+		/obj/effect/proc_holder/spell/targeted/ethereal_jaunt/breath
+	)
 	traits = list(
 		TRAIT_RESISTHIGHPRESSURE,
 		TRAIT_RESISTHEAT
 	)
+	passive_traits = list(
+		TRAIT_NOBREATH, // ironic.
+		TRAIT_PUSHIMMUNE
+	)
+
+/obj/effect/proc_holder/spell/targeted/ethereal_jaunt/breath
+	name = "Wind form"
+	clothes_req = FALSE
+	desc = "You turn into air, temporarily making you invisible and move anywhere the wind can."
+	charge_max = 200
+	jaunt_phased_mob = /obj/effect/dummy/phased_mob/spell_jaunt/breath
+
+/obj/effect/dummy/phased_mob/spell_jaunt/breath/relaymove(var/mob/user, direction)
+	if ((movedelay > world.time) || reappearing || !direction)
+		return
+	var/turf/newLoc = get_step(src,direction)
+	setDir(direction)
+
+	movedelay = world.time + movespeed
+
+	if(newLoc.flags_1 & NOJAUNT_1 )
+		to_chat(user, "<span class='warning'>Some strange aura is blocking the way.</span>")
+		return
+
+	if(newLoc.blocks_air)
+		to_chat(user, "<span class='warning'>Air can't pass through that!</span>")
+		return
+
+	forceMove(newLoc)
 
 /obj/effect/proc_holder/spell/aoe_turf/repulse/breath
 	name = "Blow away"

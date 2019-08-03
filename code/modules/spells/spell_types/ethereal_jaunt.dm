@@ -15,6 +15,7 @@
 	var/jaunt_in_time = 5
 	var/jaunt_in_type = /obj/effect/temp_visual/wizard
 	var/jaunt_out_type = /obj/effect/temp_visual/wizard/out
+	var/jaunt_phased_mob = /obj/effect/dummy/phased_mob/spell_jaunt // 413 -- allows custom jaunt mobs
 	action_icon_state = "jaunt"
 
 /obj/effect/proc_holder/spell/targeted/ethereal_jaunt/cast(list/targets,mob/user = usr) //magnets, so mostly hardcoded
@@ -25,7 +26,7 @@
 /obj/effect/proc_holder/spell/targeted/ethereal_jaunt/proc/do_jaunt(mob/living/target)
 	target.notransform = 1
 	var/turf/mobloc = get_turf(target)
-	var/obj/effect/dummy/phased_mob/spell_jaunt/holder = new /obj/effect/dummy/phased_mob/spell_jaunt(mobloc)
+	var/obj/effect/dummy/phased_mob/spell_jaunt/holder = new jaunt_phased_mob(mobloc) // 413
 	new jaunt_out_type(mobloc, target.dir)
 	target.ExtinguishMob()
 	target.forceMove(holder)
